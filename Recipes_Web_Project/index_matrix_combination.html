@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+	<head>
+		<meta charset="UTF-8">
+		<link rel="stylesheet" href="style.css" />
+		<script src="d3.min.js"></script>
+		<script src="jquery-3.2.1.min.js"></script>
+		<title>Data Visualization Project - Recipes and Ingredients</title>
+	</head>
+	<body>
+		<h1><u>Visualization in Recipes</u></h1>
+		<h2><u>Recipes By Filters</u></h2>
+		<img src="Instructions.JPG" height="250" width="550" position="center"/>
+		<select id="selector">
+			<option value="Dairy">22-Minutes</option>
+			<option value="Dairy">Advance-prep</option>
+			<option value="Dairy">Breakfast</option>
+			<option value="Dairy">Brunch</option>
+			<option value="Dairy">Dairy</option>
+			<option value="Dairy">Dessert</option>
+			<option value="Dairy">Dinner</option>
+			<option value="Dairy">Healthy</option>
+			<option value="Dairy">Gluten-Free</option>
+			<option value="Dairy">Kid-Friendly</option>
+			<option value="Kosher">Kosher</option>
+			<option value="Kosher">Kosher-Passover</option>
+			<option value="Kosher">Low-Cholesterol</option>
+			<option value="Kosher">Low-Sugar</option>
+			<option value="Kosher">Lunch</option>
+			<option value="Meat">Meat</option>
+			<option value="Meat">Paleo</option>
+			<option value="Meat">Pescatarian</option>
+			<option value="Meat">Seafood</option>
+			<option value="Vegan">Vegan</option>
+			<option value="Vegeterian">Vegeterian</option>
+		</select>
+		<button type="button" onclick="changeFilterMode()">Change Filter</button>
+		<select id="selector_sortBy">
+			<option value="Dairy">Rating</option>
+			<option value="Kosher">Calories</option>
+			<option value="Kosher">Ingredients</option>
+			<option value="Meat">Protein</option>
+			<option value="Vegan">Fat</option>
+			<option value="Vegeterian">Sodium</option>
+			<option value="Dairy">22-Minutes</option>
+			<option value="Dairy">Advance-prep</option>
+			<option value="Dairy">Breakfast</option>
+			<option value="Dairy">Brunch</option>
+			<option value="Dairy">Dairy</option>
+			<option value="Dairy">Dessert</option>
+			<option value="Dairy">Dinner</option>
+			<option value="Dairy">Healthy</option>
+			<option value="Dairy">Gluten-Free</option>
+			<option value="Dairy">Kid-Friendly</option>
+			<option value="Kosher">Kosher</option>
+			<option value="Kosher">Kosher-Passover</option>
+			<option value="Kosher">Low-Cholesterol</option>
+			<option value="Kosher">Low-Sugar</option>
+			<option value="Kosher">Lunch</option>
+			<option value="Meat">Meat</option>
+			<option value="Meat">Paleo</option>
+			<option value="Meat">Pescatarian</option>
+			<option value="Meat">Seafood</option>
+			<option value="Vegan">Vegan</option>
+			<option value="Vegeterian">Vegeterian</option>
+		</select>
+		<select id="selector_sortType">
+			<option value="Dairy">Ascending</option>
+			<option value="Kosher">Descending</option>
+		</select>
+		<button type="button" onclick="changeSortMode()">Sort</button>
+		<svg id="svg3"></svg>
+		<script>
+			changeSortMode();
+			function changeSortMode(){
+				d3.selectAll("#super_group").remove();
+				show_data_recipes($('#selector_sortBy :selected').text().toLowerCase(),$('#selector_sortType :selected').text());
+				changeFilterMode();
+			}
+			function show_data_recipes(sort_by,sort_type){
+				//SVG Dimensions
+				var filter_mode = $('#selector :selected').text().toLowerCase();
+				var margin = {top:20, bottom:20, left:40, right:40};
+				var width = 600;
+				var height = 800;
+				var square_size = 85;
+				//Select the relevant CSV data
+				d3.csv("Recipes_Dataset_Ready.csv", function(data){
+					// initilazations
+					var max_cal = d3.max(data,function(d){return parseInt(d["calories"])});
+					var min_cal = d3.min(data,function(d){return parseInt(d["calories"])});
+					var max_protein = d3.max(data,function(d){return parseInt(d["protein"])});
+					var min_protein = d3.min(data,function(d){return parseInt(d["protein"])});
+					var max_fat = d3.max(data,function(d){return parseInt(d["fat"])});
+					var min_fat = d3.min(data,function(d){return parseInt(d["fat"])});
+					var max_sodium = d3.max(data,function(d){return parseInt(d["sodium"])});
+					var min_sodium = d3.min(data,function(d){return parseInt(d["sodium"])});
+					var scale_cal = d3.scaleLinear()
+										.domain([min_cal,max_cal])
+										.range([1,(square_size/2)]);
+					var scale_protein = d3.scaleLinear()
+										.domain([min_protein,max_protein])
+										.range([1,(square_size/2)]);
+					var scale_fat = d3.scaleLinear()
+										.domain([min_fat,max_fat])
+										.range([1,(square_size/2)]);
+					var scale_sodium = d3.scaleLinear()
+										.domain([min_sodium,max_sodium])
+										.range([1,(square_size/2)]);
+					var scale_rating = d3.scaleLinear()
+										.domain([0,5])
+										.range([0.5,4.5]);
+					var display_data = 0;
+					if (sort_type == "Ascending") {
+						display_data = data.sort(function(a,b){return (b[sort_by] - a[sort_by]);});
+					}
+					else{
+						display_data = data.sort(function(a,b){return a[sort_by] - b[sort_by];});
+					}
+					var squares_in_line = 14;
+					var left_padding = 3;
+					var between_padding = 5;
+					var len = data.length;
+					var svg3_height = (parseInt(len/squares_in_line)+1)*(square_size+between_padding);
+					var svg3_width = (squares_in_line*(square_size+between_padding))+(squares_in_line*(left_padding));
+					var svg3 = d3.select("#svg3")
+									.attr("width",svg3_width)
+									.attr("height",function(d){if (svg3_height ==0){return square_size+10;}else{return svg3_height;}})
+									.append("g")
+									.attr("id","super_group");
+					//Recipe whole rect
+					svg3.selectAll("#recipes_rect")
+						.data(display_data)
+						.enter()
+						.append("rect")
+						.attr("id",function(d,i){return "recipe_rect_" + d["ID"];})
+						.attr("class","recipe_square")
+						.attr("x",function(d,i){return (i%squares_in_line)*(square_size+between_padding);})
+						.attr("y",function(d,i){return (parseInt(i/squares_in_line))*(square_size+between_padding);})
+						.attr("width",square_size)
+						.attr("height",square_size)
+						.attr("rx",5)
+						.attr("ry",5)
+						.style("stroke",function(d){if(d[filter_mode]=="1"){return "87CEFA";} else{return "DC143C";}})
+						.style("fill","white")
+						.style("stroke-width",function(d){ return scale_rating(d["rating"]);})
+						.on("mouseover",handleMouseOverSVG3)
+						.on("mouseout",handleMouseOutSVG3)
+						.on("click",handleClickOn);
+					//Recipe ID
+					var text_padding_x = 35;
+					var text_padding_y = 15;
+					svg3.selectAll("#recipes_id")
+						.data(display_data)
+						.enter()
+						.append("text")
+						.attr("x",function(d,i){return (i%squares_in_line)*(square_size+between_padding) + text_padding_x;})
+						.attr("y",function(d,i){return (parseInt(i/squares_in_line))*(square_size+between_padding) + text_padding_y;})
+						.attr("fill","red")
+						.attr("text-anchor","middle")
+						.attr("font-size",10)
+						.text(function(d,i){return "Recipe_" + d["ID"];});
+					//Rating label
+					svg3.selectAll("#rating_text")
+						.data(display_data)
+						.enter()
+						.append("text")
+						.attr("id",function(d,i){return "recipe_rect_" + d["ID"] + "rating_label";})
+						.attr("x",function(d,i){return (i%squares_in_line)*(square_size+between_padding) + (square_size/2);})
+						.attr("y",function(d,i){return (parseInt(i/squares_in_line))*(square_size+between_padding) + (square_size/3)+5;})
+						.attr("fill","black")
+						.attr("font-weight","bold")
+						.attr("visibility","hidden")
+						.text(function(d){return d["rating"];});
+					//Calories bar
+					var bar_padding = 5;
+					svg3.selectAll("#calories_bar")
+						.data(display_data)
+						.enter()
+						.append("rect")
+						.attr("id",function(d,i){return "calories_bar_" + d["ID"];})
+						.attr("x",function(d,i){return (i%squares_in_line)*(square_size+between_padding) + bar_padding;})
+						.attr("y",function(d,i){return (parseInt(i/squares_in_line))*(square_size+between_padding) + (square_size/2) - 2 + ((square_size/2)-scale_cal(d["calories"]));})
+						.attr("width",10)
+						.attr("height",function(d){return scale_cal(d["calories"]);})
+						.attr("fill", function(d){
+										var max_val = Math.max(d["calories"],d["protein"],d["fat"],d["sodium"]);
+										if (max_val==d["calories"]){
+											return "black";
+										}
+										else{
+											return "gray";
+										}
+										})
+						.on("mouseover",handleMouseOverSVG3)
+						.on("mouseout",handleMouseOutSVG3);
+					//Calories label
+					svg3.selectAll("#calories_text")
+						.data(display_data)
+						.enter()
+						.append("text")
+						.attr("id",function(d,i){return "calories_bar_" + d["ID"] + "_label";})
+						.attr("x",function(d,i){return (i%squares_in_line)*(square_size+between_padding);})
+						.attr("y",function(d,i){return (parseInt(i/squares_in_line))*(square_size+between_padding) + (square_size/2) - 5 + ((square_size/2)-scale_cal(d["calories"]));})
+						.attr("fill","black")
+						.attr("visibility","hidden")
+						.text(function(d){return d["calories"];});
+					//Protein bar
+					svg3.selectAll("#protein_bar")
+						.data(display_data)
+						.enter()
+						.append("rect")
+						.attr("id",function(d,i){return "protein_bar_" + d["ID"];})
+						.attr("x",function(d,i){return (i%squares_in_line)*(square_size+between_padding) + 4*bar_padding;})
+						.attr("y",function(d,i){return (parseInt(i/squares_in_line))*(square_size+between_padding) + (square_size/2) - 2 + ((square_size/2)-scale_protein(d["protein"]));})
+						.attr("width",10)
+						.attr("height",function(d){return scale_protein(d["protein"]);})
+						.attr("fill", function(d){
+										var max_val = Math.max(d["calories"],d["protein"],d["fat"],d["sodium"]);
+										if (max_val==d["protein"]){
+											return "black";
+										}
+										else{
+											return "gray";
+										}
+										})
+						.on("mouseover",handleMouseOverSVG3)
+						.on("mouseout",handleMouseOutSVG3)
+						.append("text");
+					//Protein label
+					svg3.selectAll("#protein_text")
+						.data(display_data)
+						.enter()
+						.append("text")
+						.attr("id",function(d,i){return "protein_bar_" + d["ID"] + "_label";})
+						.attr("x",function(d,i){return (i%squares_in_line)*(square_size+between_padding) + 4*bar_padding;})
+						.attr("y",function(d,i){return (parseInt(i/squares_in_line))*(square_size+between_padding) + (square_size/2) - 5 + ((square_size/2)-scale_protein(d["protein"]));})
+						.attr("fill","black")
+						.attr("visibility","hidden")
+						.text(function(d){return d["protein"];});
+					//Fat bar
+					svg3.selectAll("#fat_bar")
+						.data(display_data)
+						.enter()
+						.append("rect")
+						.attr("id",function(d,i){return "fat_bar_" + d["ID"];})
+						.attr("x",function(d,i){return (i%squares_in_line)*(square_size+between_padding) + 7*bar_padding;})
+						.attr("y",function(d,i){return (parseInt(i/squares_in_line))*(square_size+between_padding) + (square_size/2) - 2 + ((square_size/2)-scale_fat(d["fat"]));})
+						.attr("width",10)
+						.attr("height",function(d){return scale_fat(d["fat"]);})
+						.attr("fill", function(d){
+										var max_val = Math.max(d["calories"],d["protein"],d["fat"],d["sodium"]);
+										if (max_val==d["fat"]){
+											return "black";
+										}
+										else{
+											return "gray";
+										}
+										})
+						.on("mouseover",handleMouseOverSVG3)
+						.on("mouseout",handleMouseOutSVG3);
+					//Fat label
+					svg3.selectAll("#fat_text")
+						.data(display_data)
+						.enter()
+						.append("text")
+						.attr("id",function(d,i){return "fat_bar_" + d["ID"] + "_label";})
+						.attr("x",function(d,i){return (i%squares_in_line)*(square_size+between_padding) + 7*bar_padding;})
+						.attr("y",function(d,i){return (parseInt(i/squares_in_line))*(square_size+between_padding) + (square_size/2) - 5 + ((square_size/2)-scale_fat(d["fat"]));})
+						.attr("fill","black")
+						.attr("visibility","hidden")
+						.text(function(d){return d["fat"];});
+					//Sodium bar
+					svg3.selectAll("#sodium_bar")
+						.data(display_data)
+						.enter()
+						.append("rect")
+						.attr("id",function(d,i){return "sodium_bar_" + d["ID"];})
+						.attr("x",function(d,i){return (i%squares_in_line)*(square_size+between_padding) + 10*bar_padding;})
+						.attr("y",function(d,i){return (parseInt(i/squares_in_line))*(square_size+between_padding) + (square_size/2) - 2 + ((square_size/2)-scale_sodium(d["sodium"]));})
+						.attr("width",10)
+						.attr("height",function(d){return scale_sodium(d["sodium"]);})
+						.attr("fill", function(d){
+										var max_val = Math.max(d["calories"],d["protein"],d["fat"],d["sodium"]);
+										if (max_val==d["sodium"]){
+											return "black";
+										}
+										else{
+											return "gray";
+										}
+										})
+						.on("mouseover",handleMouseOverSVG3)
+						.on("mouseout",handleMouseOutSVG3);
+					//Sodium label
+					svg3.selectAll("#sodium_text")
+						.data(display_data)
+						.enter()
+						.append("text")
+						.attr("id",function(d,i){return "sodium_bar_" + d["ID"] + "_label";})
+						.attr("x",function(d,i){return (i%squares_in_line)*(square_size+between_padding) + 10*bar_padding;})
+						.attr("y",function(d,i){return (parseInt(i/squares_in_line))*(square_size+between_padding) + (square_size/2) - 5 + ((square_size/2)-scale_sodium(d["sodium"]));})
+						.attr("fill","black")
+						.attr("visibility","hidden")
+						.text(function(d){return d["sodium"];});
+					//Ingredients text
+					svg3.selectAll("#ing_num")
+						.data(display_data)
+						.enter()
+						.append("text")
+						.attr("id","ing_num")
+						.attr("x",function(d,i){return (i%squares_in_line)*(square_size+between_padding) + 14*bar_padding;})
+						.attr("y",function(d,i){return (parseInt(i/squares_in_line))*(square_size+between_padding) + (square_size/2) + (square_size/3);})
+						.text(function(d){return d["ingredients"];});
+				});
+			}
+			function changeFilterMode(){
+				filter_mode = $('#selector :selected').text().toLowerCase();
+				d3.selectAll(".recipe_square")
+					.style("stroke",function(d){if(d[filter_mode]=="1"){return "87CEFA";} else{return "DC143C";}});
+			}
+			function handleMouseOverSVG3(){
+				if (d3.select(this)._groups[0][0]["id"].indexOf("bar")!=-1){
+					d3.select("#" + d3.select(this)._groups[0][0]["id"] + "_label")
+						.attr("visibility","visible");
+				}
+				else{
+					d3.select(this)
+						.style("stroke","FFD700");
+					d3.select("#" + d3.select(this)._groups[0][0]["id"] + "rating_label")
+						.attr("visibility","visible");
+					//d3.select("#" + d3.select(this)._groups[0][0]["id"] + "name_label")
+					//	.attr("visibility","visible");
+				}
+			}
+			function handleMouseOutSVG3(){
+				if (d3.select(this)._groups[0][0]["id"].indexOf("bar")!=-1){
+					d3.selectAll("#" + d3.select(this)._groups[0][0]["id"] + "_label")
+						.attr("visibility","hidden");
+				}
+				else{
+					d3.select(this)
+						.style("stroke",function(d){if(d[filter_mode]=="1"){return "87CEFA";} else{return "DC143C";}});
+					d3.select("#" + d3.select(this)._groups[0][0]["id"] + "rating_label")
+						.attr("visibility","hidden");
+					//d3.select("#" + d3.select(this)._groups[0][0]["id"] + "name_label")
+					//	.attr("visibility","hidden");
+				}		
+			}
+			function handleClickOn(){
+				alert("Recipe Name: "+ d3.select(this)._groups[0][0].__data__["title"] + "\nRating: " + d3.select(this)._groups[0][0].__data__["rating"] + "\nCalories: " + d3.select(this)._groups[0][0].__data__["calories"] + "\nProtein: " + d3.select(this)._groups[0][0].__data__["protein"] + "\nFat: " + d3.select(this)._groups[0][0].__data__["fat"] + "\nSodium: " + d3.select(this)._groups[0][0].__data__["sodium"]);
+			}
+		</script>
+	</body>
+</html>

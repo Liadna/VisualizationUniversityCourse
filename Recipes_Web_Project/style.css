@@ -1,0 +1,21 @@
+h1{
+	text-align:center;
+}
+h2{
+	text-align:center;
+}
+.recipe_square:hover{
+	stroke:red;
+}
+p{
+	width:1px;
+	height:1px;
+}
+img.center {
+    display: block;
+    margin: 0 auto;
+}
+body {
+    background-image: url("food10.jpg");
+    background-color: #cccccc;
+}
